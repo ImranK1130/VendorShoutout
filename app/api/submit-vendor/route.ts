@@ -62,15 +62,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Convert files to buffers for email attachments (no file system needed)
-    const logoArrayBuffer = await businessLogo.arrayBuffer()
-    const logoBuffer = Buffer.from(logoArrayBuffer)
+    const logoBytes = await businessLogo.arrayBuffer()
+    const logoBuffer = Buffer.from(logoBytes)
     
     // Process sample images
     const sampleImageBuffers: { buffer: Buffer; filename: string }[] = []
     for (let i = 0; i < sampleImages.length; i++) {
       const image = sampleImages[i]
-      const imageArrayBuffer = await image.arrayBuffer()
-      const imageBuffer = Buffer.from(imageArrayBuffer)
+      const imageBytes = await image.arrayBuffer()
+      const imageBuffer = Buffer.from(imageBytes)
       sampleImageBuffers.push({
         buffer: imageBuffer,
         filename: `sample-image-${i + 1}-${image.name}`
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Prepare email attachments (using buffers instead of file paths)
-    const attachments = [
+    const attachments: any[] = [
       {
         filename: businessLogo.name,
         content: logoBuffer,
@@ -203,7 +203,7 @@ export async function POST(request: NextRequest) {
       attachments: attachments
     }
 
-    await transporter.sendMail(mailOptions)
+    await transporter.sendMail(mailOptions as any)
 
     return NextResponse.json(
       { 
