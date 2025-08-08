@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate required fields
-    const requiredFields = ['businessName', 'ownerName', 'email', 'location', 'services', 'description']
+    const requiredFields = ['businessName', 'ownerName', 'email', 'phone', 'location', 'services', 'description']
     for (const field of requiredFields) {
       if (!vendorData[field as keyof typeof vendorData]) {
         return NextResponse.json(

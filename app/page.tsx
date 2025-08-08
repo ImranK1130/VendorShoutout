@@ -43,6 +43,7 @@ export default function VendorShoutoutForm() {
     if (!formData.ownerName.trim()) newErrors.ownerName = 'Owner name is required'
     if (!formData.email.trim()) newErrors.email = 'Email is required'
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email format'
+    if (!formData.phone.trim()) newErrors.phone = 'Phone number is required'
     if (!formData.location.trim()) newErrors.location = 'Location is required'
     if (!formData.services.trim()) newErrors.services = 'Services/Products is required'
     if (!formData.description.trim()) newErrors.description = 'Business description is required'
@@ -233,7 +234,7 @@ export default function VendorShoutoutForm() {
                     value={formData.businessName}
                     onChange={handleInputChange}
                     className={`form-input ${errors.businessName ? 'border-red-500' : ''}`}
-                    placeholder="University of Illinois"
+                    placeholder="Mehfil Food Cart, Golden Gate Venue, etc."
                   />
                   {errors.businessName && <p className="text-red-500 text-sm mt-1">{errors.businessName}</p>}
                 </div>
@@ -246,7 +247,7 @@ export default function VendorShoutoutForm() {
                     value={formData.ownerName}
                     onChange={handleInputChange}
                     className={`form-input ${errors.ownerName ? 'border-red-500' : ''}`}
-                    placeholder="Imran"
+                    placeholder="John Smith"
                   />
                   {errors.ownerName && <p className="text-red-500 text-sm mt-1">{errors.ownerName}</p>}
                 </div>
@@ -275,15 +276,16 @@ export default function VendorShoutoutForm() {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Phone Number</label>
+                  <label className="form-label">Phone Number *</label>
                   <input
                     type="tel"
                     name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
-                    className="form-input"
+                    className={`form-input ${errors.phone ? 'border-red-500' : ''}`}
                     placeholder="(123) 456-7890"
                   />
+                  {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
                 </div>
               </div>
             </div>
@@ -351,7 +353,7 @@ export default function VendorShoutoutForm() {
                     value={formData.services}
                     onChange={handleInputChange}
                     className={`form-input ${errors.services ? 'border-red-500' : ''}`}
-                    placeholder="Web development, Mobile apps, Consulting"
+                    placeholder="Pakistani Food, Wedding Venue, Catering Services, etc."
                   />
                   {errors.services && <p className="text-red-500 text-sm mt-1">{errors.services}</p>}
                 </div>
