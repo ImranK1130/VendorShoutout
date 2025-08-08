@@ -62,13 +62,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Convert files to buffers for email attachments (no file system needed)
-    const logoBuffer = Buffer.from(await businessLogo.arrayBuffer())
+    const logoArrayBuffer = await businessLogo.arrayBuffer()
+    const logoBuffer = Buffer.from(logoArrayBuffer)
     
     // Process sample images
     const sampleImageBuffers: { buffer: Buffer; filename: string }[] = []
     for (let i = 0; i < sampleImages.length; i++) {
       const image = sampleImages[i]
-      const imageBuffer = Buffer.from(await image.arrayBuffer())
+      const imageArrayBuffer = await image.arrayBuffer()
+      const imageBuffer = Buffer.from(imageArrayBuffer)
       sampleImageBuffers.push({
         buffer: imageBuffer,
         filename: `sample-image-${i + 1}-${image.name}`
