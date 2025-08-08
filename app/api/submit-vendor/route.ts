@@ -4,7 +4,7 @@ import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 
 // Email configuration using your provided SMTP settings
-const transporter = nodemailer.createTransporter({
+const transporter = nodemailer.createTransport({
   host: 'mail.spacemail.com',
   port: 465,
   secure: true, // Use SSL
