@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
-import { writeFile, mkdir } from 'fs/promises'
-import path from 'path'
 
 // Email configuration using your provided SMTP settings
 const transporter = nodemailer.createTransport({
@@ -63,45 +61,34 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), 'uploads')
-    try {
-      await mkdir(uploadsDir, { recursive: true })
-    } catch (error) {
-      // Directory might already exist
-    }
-
-    // Save business logo
+    // Convert files to buffers for email attachments (no file system needed)
     const logoBuffer = Buffer.from(await businessLogo.arrayBuffer())
-    const logoFileName = `logo-${Date.now()}-${businessLogo.name}`
-    const logoPath = path.join(uploadsDir, logoFileName)
-    await writeFile(logoPath, logoBuffer)
-
-    // Save sample images
-    const savedSampleImages: string[] = []
+    
+    // Process sample images
+    const sampleImageBuffers: { buffer: Buffer; filename: string }[] = []
     for (let i = 0; i < sampleImages.length; i++) {
       const image = sampleImages[i]
       const imageBuffer = Buffer.from(await image.arrayBuffer())
-      const imageFileName = `sample-${Date.now()}-${i}-${image.name}`
-      const imagePath = path.join(uploadsDir, imageFileName)
-      await writeFile(imagePath, imageBuffer)
-      savedSampleImages.push(imagePath)
+      sampleImageBuffers.push({
+        buffer: imageBuffer,
+        filename: `sample-image-${i + 1}-${image.name}`
+      })
     }
 
-    // Prepare email attachments
+    // Prepare email attachments (using buffers instead of file paths)
     const attachments = [
       {
         filename: businessLogo.name,
-        path: logoPath,
+        content: logoBuffer,
         cid: 'businessLogo'
       }
     ]
 
     // Add sample images as attachments
-    savedSampleImages.forEach((imagePath, index) => {
+    sampleImageBuffers.forEach((imageData, index) => {
       attachments.push({
-        filename: `sample-image-${index + 1}.${path.extname(imagePath)}`,
-        path: imagePath,
+        filename: imageData.filename,
+        content: imageData.buffer,
         cid: `sampleImage${index}`
       })
     })

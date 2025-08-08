@@ -104,7 +104,7 @@ export default function VendorShoutoutForm() {
 
       if (response.ok) {
         setSubmitStatus('success')
-        // Reset form
+        // Reset form completely
         setFormData({
           businessName: '',
           ownerName: '',
@@ -118,8 +118,19 @@ export default function VendorShoutoutForm() {
           businessLogo: null,
           sampleImages: []
         })
+        // Clear file inputs
+        const fileInputs = document.querySelectorAll('input[type="file"]') as NodeListOf<HTMLInputElement>
+        fileInputs.forEach(input => {
+          input.value = ''
+        })
+        // Clear any errors
+        setErrors({})
+        // Scroll to top to show success message
+        window.scrollTo({ top: 0, behavior: 'smooth' })
       } else {
+        const errorData = await response.json()
         setSubmitStatus('error')
+        console.error('Submission failed:', errorData)
       }
     } catch (error) {
       console.error('Submission error:', error)
@@ -142,6 +153,11 @@ export default function VendorShoutoutForm() {
       description: '',
       businessLogo: null,
       sampleImages: []
+    })
+    // Clear file inputs
+    const fileInputs = document.querySelectorAll('input[type="file"]') as NodeListOf<HTMLInputElement>
+    fileInputs.forEach(input => {
+      input.value = ''
     })
     setErrors({})
     setSubmitStatus('idle')
@@ -180,9 +196,15 @@ export default function VendorShoutoutForm() {
         {/* Form */}
         <div className="card">
           {submitStatus === 'success' && (
-            <div className="mb-8 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
-              <h3 className="font-semibold">Submission Successful!</h3>
-              <p>Thank you for submitting your business information. We'll review it and feature you on our social media soon!</p>
+            <div className="mb-8 p-6 bg-gradient-to-r from-green-100 to-blue-100 border border-green-400 text-green-800 rounded-lg shadow-lg">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-2xl">🎉</span>
+                <h3 className="font-bold text-lg">Submission Successful!</h3>
+              </div>
+              <p className="mb-2">Thank you for submitting your business information to Mehfil!</p>
+              <p className="text-sm">✅ Your information has been sent to our team</p>
+              <p className="text-sm">✅ We'll review your submission and feature you on our social media soon</p>
+              <p className="text-sm">✅ You'll be contacted if we need any additional information</p>
             </div>
           )}
 
@@ -247,7 +269,7 @@ export default function VendorShoutoutForm() {
                     value={formData.email}
                     onChange={handleInputChange}
                     className={`form-input ${errors.email ? 'border-red-500' : ''}`}
-                    placeholder="ikhan54@uic.edu"
+                    placeholder="business@example.com"
                   />
                   {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
                 </div>
@@ -260,7 +282,7 @@ export default function VendorShoutoutForm() {
                     value={formData.phone}
                     onChange={handleInputChange}
                     className="form-input"
-                    placeholder="7736160008"
+                    placeholder="(123) 456-7890"
                   />
                 </div>
               </div>
