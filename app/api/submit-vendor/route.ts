@@ -14,7 +14,9 @@ const transporter = nodemailer.createTransport({
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('API Route: Starting form submission processing...')
     const formData = await request.formData()
+    console.log('API Route: FormData received successfully')
     
     // Extract form fields
     const vendorData = {
@@ -30,15 +32,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate required fields
+    console.log('API Route: Validating form data...', vendorData)
     const requiredFields = ['businessName', 'ownerName', 'email', 'phone', 'location', 'services', 'description']
     for (const field of requiredFields) {
       if (!vendorData[field as keyof typeof vendorData]) {
+        console.log(`API Route: Validation failed - ${field} is missing`)
         return NextResponse.json(
           { error: `${field} is required` },
           { status: 400 }
         )
       }
     }
+    console.log('API Route: Validation passed')
 
     // Handle file uploads
     const businessLogo = formData.get('businessLogo') as File
@@ -55,20 +60,45 @@ export async function POST(request: NextRequest) {
     }
 
     if (!businessLogo) {
+      console.log('API Route: Business logo is missing')
       return NextResponse.json(
         { error: 'Business logo is required' },
         { status: 400 }
       )
     }
+    console.log('API Route: Processing files...', { logoName: businessLogo.name, logoSize: businessLogo.size, sampleImagesCount: sampleImages.length })
+
+    // Check file sizes (25MB limit)
+    const maxFileSize = 25 * 1024 * 1024 // 25MB
+    if (businessLogo.size > maxFileSize) {
+      console.log('API Route: Business logo too large:', businessLogo.size)
+      return NextResponse.json(
+        { error: 'Business logo file size must be less than 25MB' },
+        { status: 400 }
+      )
+    }
 
     // Convert files to buffers for email attachments (no file system needed)
+    console.log('API Route: Converting logo to buffer...')
     const logoBytes = await businessLogo.arrayBuffer()
     const logoBuffer = Buffer.from(logoBytes)
+    console.log('API Route: Logo processed successfully')
     
     // Process sample images
+    console.log('API Route: Processing sample images...')
     const sampleImageBuffers: { buffer: Buffer; filename: string }[] = []
     for (let i = 0; i < sampleImages.length; i++) {
       const image = sampleImages[i]
+      
+      // Check sample image file size
+      if (image.size > maxFileSize) {
+        console.log(`API Route: Sample image ${i} too large:`, image.size)
+        return NextResponse.json(
+          { error: `Sample image "${image.name}" file size must be less than 25MB` },
+          { status: 400 }
+        )
+      }
+      
       const imageBytes = await image.arrayBuffer()
       const imageBuffer = Buffer.from(imageBytes)
       sampleImageBuffers.push({
@@ -76,6 +106,7 @@ export async function POST(request: NextRequest) {
         filename: `sample-image-${i + 1}-${image.name}`
       })
     }
+    console.log('API Route: Sample images processed successfully')
 
     // Prepare email attachments (using buffers instead of file paths)
     const attachments: any[] = [

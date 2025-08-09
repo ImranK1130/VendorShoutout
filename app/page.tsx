@@ -63,14 +63,29 @@ export default function VendorShoutoutForm() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'businessLogo' | 'sampleImages') => {
     const files = Array.from(e.target.files || [])
+    const maxFileSize = 25 * 1024 * 1024 // 25MB in bytes
     
     if (field === 'businessLogo' && files.length > 0) {
-      setFormData(prev => ({ ...prev, businessLogo: files[0] }))
+      const file = files[0]
+      if (file.size > maxFileSize) {
+        setErrors(prev => ({ ...prev, businessLogo: 'File size must be less than 25MB' }))
+        e.target.value = '' // Clear the input
+        return
+      }
+      setFormData(prev => ({ ...prev, businessLogo: file }))
       if (errors.businessLogo) {
         setErrors(prev => ({ ...prev, businessLogo: '' }))
       }
     } else if (field === 'sampleImages') {
-      setFormData(prev => ({ ...prev, sampleImages: files.slice(0, 5) }))
+      // Check each sample image file size
+      const validFiles = files.filter(file => {
+        if (file.size > maxFileSize) {
+          alert(`File "${file.name}" is too large. Maximum size is 25MB.`)
+          return false
+        }
+        return true
+      })
+      setFormData(prev => ({ ...prev, sampleImages: validFiles.slice(0, 5) }))
     }
   }
 
@@ -387,10 +402,10 @@ export default function VendorShoutoutForm() {
                   <input
                     type="file"
                     onChange={(e) => handleFileChange(e, 'businessLogo')}
-                    accept="image/png,image/jpeg,image/svg+xml"
+                    accept="image/png,image/jpeg,image/svg+xml,image/jpg"
                     className={`form-input ${errors.businessLogo ? 'border-red-500' : ''}`}
                   />
-                  <p className="text-sm text-gray-500 mt-1">PNG, JPG, or SVG (max 5MB)</p>
+                  <p className="text-sm text-gray-500 mt-1">PNG, JPG, or SVG (max 25MB)</p>
                   {errors.businessLogo && <p className="text-red-500 text-sm mt-1">{errors.businessLogo}</p>}
                 </div>
 
@@ -403,7 +418,7 @@ export default function VendorShoutoutForm() {
                     accept="image/png,image/jpeg,image/jpg"
                     className="form-input"
                   />
-                  <p className="text-sm text-gray-500 mt-1">Upload 2-5 images of your work/products (max 5MB each)</p>
+                  <p className="text-sm text-gray-500 mt-1">Upload 2-5 images of your work/products (max 25MB each)</p>
                   {formData.sampleImages.length > 0 && (
                     <p className="text-sm text-mehfil-primary mt-1">{formData.sampleImages.length} file(s) selected</p>
                   )}
