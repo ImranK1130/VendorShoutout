@@ -148,7 +148,15 @@ export default function VendorShoutoutForm() {
       } else {
         const errorData = await response.json()
         setSubmitStatus('error')
-        console.error('Submission failed:', errorData)
+        console.error('Submission failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData: errorData
+        })
+        // Show specific error message if available
+        if (errorData?.error) {
+          alert(`Submission failed: ${errorData.error}`)
+        }
       }
     } catch (error) {
       console.error('Submission error:', error)

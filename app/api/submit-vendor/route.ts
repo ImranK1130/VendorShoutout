@@ -80,41 +80,61 @@ export async function POST(request: NextRequest) {
 
     // Upload files to Cloudinary with descriptive names
     console.log('API Route: Uploading logo to Cloudinary...')
-    const logoBytes = await businessLogo.arrayBuffer()
-    const logoBuffer = Buffer.from(logoBytes)
+    let logoUpload: { url: string; public_id: string }
+    let logoName: string
     
-    // Create descriptive name: "businessname-logo"
-    const logoName = `${vendorData.businessName.toLowerCase().replace(/[^a-z0-9]/g, '-')}-logo`
-    const logoUpload = await uploadToCloudinary(logoBuffer, businessLogo.name, 'mehfil-vendor-logos', logoName)
-    console.log('API Route: Logo uploaded successfully:', logoUpload.url)
+    try {
+      const logoBytes = await businessLogo.arrayBuffer()
+      const logoBuffer = Buffer.from(logoBytes)
+      
+      // Create descriptive name: "businessname-logo"
+      logoName = `${vendorData.businessName.toLowerCase().replace(/[^a-z0-9]/g, '-')}-logo`
+      console.log('API Route: Logo name will be:', logoName)
+      logoUpload = await uploadToCloudinary(logoBuffer, businessLogo.name, 'mehfil-vendor-logos', logoName)
+      console.log('API Route: Logo uploaded successfully:', logoUpload.url)
+    } catch (logoError) {
+      console.error('API Route: Logo upload failed:', logoError)
+      throw new Error(`Logo upload failed: ${logoError instanceof Error ? logoError.message : 'Unknown error'}`)
+    }
     
     // Process sample images and upload to Cloudinary
     console.log('API Route: Uploading sample images to Cloudinary...')
     const sampleImageUploads: { url: string; filename: string }[] = []
-    for (let i = 0; i < sampleImages.length; i++) {
-      const image = sampleImages[i]
-      
-      // Check sample image file size
-      if (image.size > maxFileSize) {
-        console.log(`API Route: Sample image ${i} too large:`, image.size)
-        return NextResponse.json(
-          { error: `Sample image "${image.name}" file size must be less than 100MB` },
-          { status: 400 }
-        )
+    
+    try {
+      for (let i = 0; i < sampleImages.length; i++) {
+        const image = sampleImages[i]
+        
+        // Check sample image file size
+        if (image.size > maxFileSize) {
+          console.log(`API Route: Sample image ${i} too large:`, image.size)
+          return NextResponse.json(
+            { error: `Sample image "${image.name}" file size must be less than 100MB` },
+            { status: 400 }
+          )
+        }
+        
+        console.log(`API Route: Processing sample image ${i + 1}:`, image.name)
+        const imageBytes = await image.arrayBuffer()
+        const imageBuffer = Buffer.from(imageBytes)
+        
+        // Create descriptive name: "businessname-sample-1"
+        const sampleName = `${vendorData.businessName.toLowerCase().replace(/[^a-z0-9]/g, '-')}-sample-${i + 1}`
+        console.log(`API Route: Sample image ${i + 1} name will be:`, sampleName)
+        
+        const imageUpload = await uploadToCloudinary(imageBuffer, image.name, 'mehfil-vendor-samples', sampleName)
+        console.log(`API Route: Sample image ${i + 1} uploaded successfully:`, imageUpload.url)
+        
+        sampleImageUploads.push({
+          url: imageUpload.url,
+          filename: `${vendorData.businessName} - Sample ${i + 1}`
+        })
       }
-      
-      const imageBytes = await image.arrayBuffer()
-      const imageBuffer = Buffer.from(imageBytes)
-      
-      // Create descriptive name: "businessname-sample-1"
-      const sampleName = `${vendorData.businessName.toLowerCase().replace(/[^a-z0-9]/g, '-')}-sample-${i + 1}`
-      const imageUpload = await uploadToCloudinary(imageBuffer, image.name, 'mehfil-vendor-samples', sampleName)
-      sampleImageUploads.push({
-        url: imageUpload.url,
-        filename: `${vendorData.businessName} - Sample ${i + 1}`
-      })
+      console.log('API Route: All sample images uploaded successfully')
+    } catch (sampleError) {
+      console.error('API Route: Sample image upload failed:', sampleError)
+      throw new Error(`Sample image upload failed: ${sampleError instanceof Error ? sampleError.message : 'Unknown error'}`)
     }
-    console.log('API Route: Sample images uploaded successfully')
 
     // No email attachments needed - we'll include URLs in the email instead
     const attachments: any[] = []
