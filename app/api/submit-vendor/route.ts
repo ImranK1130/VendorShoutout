@@ -69,12 +69,12 @@ export async function POST(request: NextRequest) {
     }
     console.log('API Route: Processing files...', { logoName: businessLogo.name, logoSize: businessLogo.size, sampleImagesCount: sampleImages.length })
 
-    // Check file sizes (25MB limit)
-    const maxFileSize = 25 * 1024 * 1024 // 25MB
+    // Check file sizes (100MB limit)
+    const maxFileSize = 100 * 1024 * 1024 // 100MB
     if (businessLogo.size > maxFileSize) {
       console.log('API Route: Business logo too large:', businessLogo.size)
       return NextResponse.json(
-        { error: 'Business logo file size must be less than 25MB' },
+        { error: 'Business logo file size must be less than 100MB' },
         { status: 400 }
       )
     }
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
       if (image.size > maxFileSize) {
         console.log(`API Route: Sample image ${i} too large:`, image.size)
         return NextResponse.json(
-          { error: `Sample image "${image.name}" file size must be less than 25MB` },
+          { error: `Sample image "${image.name}" file size must be less than 100MB` },
           { status: 400 }
         )
       }

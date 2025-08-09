@@ -64,12 +64,12 @@ export default function VendorShoutoutForm() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'businessLogo' | 'sampleImages') => {
     const files = Array.from(e.target.files || [])
-    const maxFileSize = 25 * 1024 * 1024 // 25MB in bytes
+    const maxFileSize = 100 * 1024 * 1024 // 100MB in bytes
     
     if (field === 'businessLogo' && files.length > 0) {
       const file = files[0]
       if (file.size > maxFileSize) {
-        setErrors(prev => ({ ...prev, businessLogo: 'File size must be less than 25MB' }))
+        setErrors(prev => ({ ...prev, businessLogo: 'File size must be less than 100MB' }))
         e.target.value = '' // Clear the input
         return
       }
@@ -81,7 +81,7 @@ export default function VendorShoutoutForm() {
       // Check each sample image file size
       const validFiles = files.filter(file => {
         if (file.size > maxFileSize) {
-          alert(`File "${file.name}" is too large. Maximum size is 25MB.`)
+          alert(`File "${file.name}" is too large. Maximum size is 100MB.`)
           return false
         }
         return true
@@ -411,7 +411,7 @@ export default function VendorShoutoutForm() {
                     accept="image/png,image/jpeg,image/svg+xml,image/jpg"
                     className={`form-input ${errors.businessLogo ? 'border-red-500' : ''}`}
                   />
-                  <p className="text-sm text-gray-500 mt-1">PNG, JPG, or SVG (max 25MB)</p>
+                  <p className="text-sm text-gray-500 mt-1">PNG, JPG, or SVG (max 100MB)</p>
                   {errors.businessLogo && <p className="text-red-500 text-sm mt-1">{errors.businessLogo}</p>}
                 </div>
 
@@ -424,7 +424,7 @@ export default function VendorShoutoutForm() {
                     accept="image/png,image/jpeg,image/jpg"
                     className="form-input"
                   />
-                  <p className="text-sm text-gray-500 mt-1">Upload 2-5 images of your work/products (max 25MB each)</p>
+                  <p className="text-sm text-gray-500 mt-1">Upload 2-5 images of your work/products (max 100MB each)</p>
                   {formData.sampleImages.length > 0 && (
                     <p className="text-sm text-mehfil-primary mt-1">{formData.sampleImages.length} file(s) selected</p>
                   )}
