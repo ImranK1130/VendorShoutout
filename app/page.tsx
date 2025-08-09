@@ -35,6 +35,7 @@ export default function VendorShoutoutForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [uploadProgress, setUploadProgress] = useState<string>('')
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
@@ -96,6 +97,7 @@ export default function VendorShoutoutForm() {
 
     setIsSubmitting(true)
     setSubmitStatus('idle')
+    setUploadProgress('Preparing files for upload...')
 
     try {
       const formDataToSend = new FormData()
@@ -113,6 +115,8 @@ export default function VendorShoutoutForm() {
         }
       })
 
+      setUploadProgress('Uploading files to cloud storage...')
+      
       const response = await fetch('/api/submit-vendor', {
         method: 'POST',
         body: formDataToSend,
@@ -141,6 +145,7 @@ export default function VendorShoutoutForm() {
         })
         // Clear any errors
         setErrors({})
+        setUploadProgress('')
         // Scroll to top to show success message
         window.scrollTo({ top: 0, behavior: 'smooth' })
       } else {
@@ -151,6 +156,7 @@ export default function VendorShoutoutForm() {
     } catch (error) {
       console.error('Submission error:', error)
       setSubmitStatus('error')
+      setUploadProgress('')
     } finally {
       setIsSubmitting(false)
     }
@@ -426,6 +432,16 @@ export default function VendorShoutoutForm() {
               </div>
             </div>
 
+            {/* Upload Progress */}
+            {uploadProgress && (
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                  <p className="text-blue-800 font-medium">{uploadProgress}</p>
+                </div>
+              </div>
+            )}
+
             {/* Submit Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 pt-6">
               <button
@@ -433,7 +449,7 @@ export default function VendorShoutoutForm() {
                 disabled={isSubmitting}
                 className={`btn-primary flex-1 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                {isSubmitting ? 'Submitting...' : 'Submit for Shoutout'}
+                {isSubmitting ? (uploadProgress || 'Submitting...') : 'Submit for Shoutout'}
               </button>
               <button
                 type="button"

@@ -3,8 +3,5 @@
     "app/api/submit-vendor/route.ts": {
       "maxDuration": 60
     }
-  },
-  "limits": {
-    "maxRequestBodySize": "50mb"
   }
 }

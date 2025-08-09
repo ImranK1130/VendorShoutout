@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
+import { uploadToCloudinary } from '@/lib/cloudinary'
 
 // Email configuration using your provided SMTP settings
 const transporter = nodemailer.createTransport({
@@ -78,15 +79,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Convert files to buffers for email attachments (no file system needed)
-    console.log('API Route: Converting logo to buffer...')
+    // Upload files to Cloudinary with descriptive names
+    console.log('API Route: Uploading logo to Cloudinary...')
     const logoBytes = await businessLogo.arrayBuffer()
     const logoBuffer = Buffer.from(logoBytes)
-    console.log('API Route: Logo processed successfully')
     
-    // Process sample images
-    console.log('API Route: Processing sample images...')
-    const sampleImageBuffers: { buffer: Buffer; filename: string }[] = []
+    // Create descriptive name: "businessname-logo"
+    const logoName = `${vendorData.businessName.toLowerCase().replace(/[^a-z0-9]/g, '-')}-logo`
+    const logoUpload = await uploadToCloudinary(logoBuffer, businessLogo.name, 'mehfil-vendor-logos', logoName)
+    console.log('API Route: Logo uploaded successfully:', logoUpload.url)
+    
+    // Process sample images and upload to Cloudinary
+    console.log('API Route: Uploading sample images to Cloudinary...')
+    const sampleImageUploads: { url: string; filename: string }[] = []
     for (let i = 0; i < sampleImages.length; i++) {
       const image = sampleImages[i]
       
@@ -101,30 +106,19 @@ export async function POST(request: NextRequest) {
       
       const imageBytes = await image.arrayBuffer()
       const imageBuffer = Buffer.from(imageBytes)
-      sampleImageBuffers.push({
-        buffer: imageBuffer,
-        filename: `sample-image-${i + 1}-${image.name}`
+      
+      // Create descriptive name: "businessname-sample-1"
+      const sampleName = `${vendorData.businessName.toLowerCase().replace(/[^a-z0-9]/g, '-')}-sample-${i + 1}`
+      const imageUpload = await uploadToCloudinary(imageBuffer, image.name, 'mehfil-vendor-samples', sampleName)
+      sampleImageUploads.push({
+        url: imageUpload.url,
+        filename: `${vendorData.businessName} - Sample ${i + 1}`
       })
     }
-    console.log('API Route: Sample images processed successfully')
+    console.log('API Route: Sample images uploaded successfully')
 
-    // Prepare email attachments (using buffers instead of file paths)
-    const attachments: any[] = [
-      {
-        filename: businessLogo.name,
-        content: logoBuffer,
-        cid: 'businessLogo'
-      }
-    ]
-
-    // Add sample images as attachments
-    sampleImageBuffers.forEach((imageData, index) => {
-      attachments.push({
-        filename: imageData.filename,
-        content: imageData.buffer,
-        cid: `sampleImage${index}`
-      })
-    })
+    // No email attachments needed - we'll include URLs in the email instead
+    const attachments: any[] = []
 
     // Create email content
     const emailHtml = `
@@ -206,14 +200,30 @@ export async function POST(request: NextRequest) {
           </div>
 
           <div class="section">
-            <h2>📎 Attachments</h2>
-            <p><strong>Business Logo:</strong> ${businessLogo.name}</p>
-            ${sampleImages.length > 0 ? `
-              <p><strong>Sample Images:</strong></p>
-              <ul>
-                ${sampleImages.map((img, index) => `<li>Sample Image ${index + 1}: ${img.name}</li>`).join('')}
-              </ul>
-            ` : '<p>No sample images provided</p>'}
+            <h2>📎 Media Files (Stored in Cloudinary)</h2>
+            <div style="margin-bottom: 20px; padding: 15px; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #6366f1;">
+              <p><strong>🏢 Business Logo:</strong></p>
+              <p style="margin: 5px 0;"><strong>File name in Cloudinary:</strong> <code>${logoName}</code></p>
+              <img src="${logoUpload.url}" alt="Business Logo" style="max-width: 150px; max-height: 150px; border-radius: 8px; margin: 10px 0; border: 2px solid #e5e7eb;">
+              <br><a href="${logoUpload.url}" target="_blank" style="color: #6366f1; text-decoration: none; font-weight: bold;">🔗 View/Download Full Size Logo</a>
+            </div>
+            ${sampleImageUploads.length > 0 ? `
+              <div style="margin-top: 20px;">
+                <p><strong>📸 Sample Images:</strong></p>
+                ${sampleImageUploads.map((img, index) => `
+                  <div style="margin: 15px 0; padding: 15px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
+                    <p style="margin: 0 0 5px 0; font-weight: bold;">${img.filename}</p>
+                    <p style="margin: 5px 0; font-size: 12px; color: #6b7280;"><strong>File name in Cloudinary:</strong> <code>${vendorData.businessName.toLowerCase().replace(/[^a-z0-9]/g, '-')}-sample-${index + 1}</code></p>
+                    <img src="${img.url}" alt="${img.filename}" style="max-width: 150px; max-height: 150px; border-radius: 8px; margin: 10px 0; border: 2px solid #e5e7eb;">
+                    <br><a href="${img.url}" target="_blank" style="color: #6366f1; text-decoration: none; font-weight: bold;">🔗 View/Download Full Size</a>
+                  </div>
+                `).join('')}
+              </div>
+            ` : '<p style="color: #6b7280; font-style: italic;">No sample images provided</p>'}
+            
+            <div style="margin-top: 20px; padding: 15px; background: #ecfdf5; border-radius: 8px; border-left: 4px solid #10b981;">
+              <p style="margin: 0; color: #065f46;"><strong>💡 All images are stored in your Cloudinary account with descriptive names for easy identification!</strong></p>
+            </div>
           </div>
         </div>
 
@@ -234,12 +244,16 @@ export async function POST(request: NextRequest) {
       attachments: attachments
     }
 
+    console.log('API Route: Sending email...')
     await transporter.sendMail(mailOptions as any)
+    console.log('API Route: Email sent successfully')
 
     return NextResponse.json(
       { 
         message: 'Submission successful! We will review your information and feature you soon.',
-        success: true
+        success: true,
+        logoUrl: logoUpload.url,
+        sampleImages: sampleImageUploads.map(img => img.url)
       },
       { status: 200 }
     )
