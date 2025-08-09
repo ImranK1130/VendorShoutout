@@ -14,7 +14,10 @@ interface FormData {
   services: string
   description: string
   businessLogo: File | null
-  sampleImages: File[]
+  sampleImage1: File | null
+  sampleImage2: File | null
+  sampleImage3: File | null
+  sampleImage4: File | null
 }
 
 export default function VendorShoutoutForm() {
@@ -29,7 +32,10 @@ export default function VendorShoutoutForm() {
     services: '',
     description: '',
     businessLogo: null,
-    sampleImages: []
+    sampleImage1: null,
+    sampleImage2: null,
+    sampleImage3: null,
+    sampleImage4: null
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -62,31 +68,21 @@ export default function VendorShoutoutForm() {
     }
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'businessLogo' | 'sampleImages') => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'businessLogo' | 'sampleImage1' | 'sampleImage2' | 'sampleImage3' | 'sampleImage4') => {
     const files = Array.from(e.target.files || [])
     const maxFileSize = 100 * 1024 * 1024 // 100MB in bytes
     
-    if (field === 'businessLogo' && files.length > 0) {
+    if (files.length > 0) {
       const file = files[0]
       if (file.size > maxFileSize) {
-        setErrors(prev => ({ ...prev, businessLogo: 'File size must be less than 100MB' }))
+        setErrors(prev => ({ ...prev, [field]: 'File size must be less than 100MB' }))
         e.target.value = '' // Clear the input
         return
       }
-      setFormData(prev => ({ ...prev, businessLogo: file }))
-      if (errors.businessLogo) {
-        setErrors(prev => ({ ...prev, businessLogo: '' }))
+      setFormData(prev => ({ ...prev, [field]: file }))
+      if (errors[field]) {
+        setErrors(prev => ({ ...prev, [field]: '' }))
       }
-    } else if (field === 'sampleImages') {
-      // Check each sample image file size
-      const validFiles = files.filter(file => {
-        if (file.size > maxFileSize) {
-          alert(`File "${file.name}" is too large. Maximum size is 100MB.`)
-          return false
-        }
-        return true
-      })
-      setFormData(prev => ({ ...prev, sampleImages: validFiles.slice(0, 5) }))
     }
   }
 
@@ -106,10 +102,8 @@ export default function VendorShoutoutForm() {
       Object.entries(formData).forEach(([key, value]) => {
         if (key === 'businessLogo' && value) {
           formDataToSend.append('businessLogo', value)
-        } else if (key === 'sampleImages' && Array.isArray(value)) {
-          value.forEach((file, index) => {
-            formDataToSend.append(`sampleImage${index}`, file)
-          })
+        } else if (key.startsWith('sampleImage') && value) {
+          formDataToSend.append(key, value)
         } else if (typeof value === 'string') {
           formDataToSend.append(key, value)
         }
@@ -136,7 +130,10 @@ export default function VendorShoutoutForm() {
           services: '',
           description: '',
           businessLogo: null,
-          sampleImages: []
+          sampleImage1: null,
+          sampleImage2: null,
+          sampleImage3: null,
+          sampleImage4: null
         })
         // Clear file inputs
         const fileInputs = document.querySelectorAll('input[type="file"]') as NodeListOf<HTMLInputElement>
@@ -174,7 +171,10 @@ export default function VendorShoutoutForm() {
       services: '',
       description: '',
       businessLogo: null,
-      sampleImages: []
+      sampleImage1: null,
+      sampleImage2: null,
+      sampleImage3: null,
+      sampleImage4: null
     })
     // Clear file inputs
     const fileInputs = document.querySelectorAll('input[type="file"]') as NodeListOf<HTMLInputElement>
@@ -417,17 +417,69 @@ export default function VendorShoutoutForm() {
 
                 <div className="form-group">
                   <label className="form-label">Sample Images</label>
-                  <input
-                    type="file"
-                    multiple
-                    onChange={(e) => handleFileChange(e, 'sampleImages')}
-                    accept="image/png,image/jpeg,image/jpg"
-                    className="form-input"
-                  />
-                  <p className="text-sm text-gray-500 mt-1">Upload 2-5 images of your work/products (max 100MB each)</p>
-                  {formData.sampleImages.length > 0 && (
-                    <p className="text-sm text-mehfil-primary mt-1">{formData.sampleImages.length} file(s) selected</p>
-                  )}
+                  <p className="text-sm text-gray-600 mb-4">Upload up to 4 images of your work/products (max 100MB each)</p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Sample Image 1 */}
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700">Sample Image 1</label>
+                      <input
+                        type="file"
+                        onChange={(e) => handleFileChange(e, 'sampleImage1')}
+                        accept="image/png,image/jpeg,image/jpg"
+                        className={`form-input ${errors.sampleImage1 ? 'border-red-500' : ''}`}
+                      />
+                      {formData.sampleImage1 && (
+                        <p className="text-sm text-green-600">✓ {formData.sampleImage1.name}</p>
+                      )}
+                      {errors.sampleImage1 && <p className="text-red-500 text-sm">{errors.sampleImage1}</p>}
+                    </div>
+
+                    {/* Sample Image 2 */}
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700">Sample Image 2</label>
+                      <input
+                        type="file"
+                        onChange={(e) => handleFileChange(e, 'sampleImage2')}
+                        accept="image/png,image/jpeg,image/jpg"
+                        className={`form-input ${errors.sampleImage2 ? 'border-red-500' : ''}`}
+                      />
+                      {formData.sampleImage2 && (
+                        <p className="text-sm text-green-600">✓ {formData.sampleImage2.name}</p>
+                      )}
+                      {errors.sampleImage2 && <p className="text-red-500 text-sm">{errors.sampleImage2}</p>}
+                    </div>
+
+                    {/* Sample Image 3 */}
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700">Sample Image 3</label>
+                      <input
+                        type="file"
+                        onChange={(e) => handleFileChange(e, 'sampleImage3')}
+                        accept="image/png,image/jpeg,image/jpg"
+                        className={`form-input ${errors.sampleImage3 ? 'border-red-500' : ''}`}
+                      />
+                      {formData.sampleImage3 && (
+                        <p className="text-sm text-green-600">✓ {formData.sampleImage3.name}</p>
+                      )}
+                      {errors.sampleImage3 && <p className="text-red-500 text-sm">{errors.sampleImage3}</p>}
+                    </div>
+
+                    {/* Sample Image 4 */}
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700">Sample Image 4</label>
+                      <input
+                        type="file"
+                        onChange={(e) => handleFileChange(e, 'sampleImage4')}
+                        accept="image/png,image/jpeg,image/jpg"
+                        className={`form-input ${errors.sampleImage4 ? 'border-red-500' : ''}`}
+                      />
+                      {formData.sampleImage4 && (
+                        <p className="text-sm text-green-600">✓ {formData.sampleImage4.name}</p>
+                      )}
+                      {errors.sampleImage4 && <p className="text-red-500 text-sm">{errors.sampleImage4}</p>}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

@@ -50,15 +50,14 @@ export async function POST(request: NextRequest) {
     const businessLogo = formData.get('businessLogo') as File
     const sampleImages: File[] = []
     
-    // Get sample images
-    let imageIndex = 0
-    while (formData.get(`sampleImage${imageIndex}`)) {
-      const sampleImage = formData.get(`sampleImage${imageIndex}`) as File
-      if (sampleImage) {
+    // Get sample images from 4 separate fields
+    const sampleImageFields = ['sampleImage1', 'sampleImage2', 'sampleImage3', 'sampleImage4']
+    sampleImageFields.forEach(fieldName => {
+      const sampleImage = formData.get(fieldName) as File
+      if (sampleImage && sampleImage.size > 0) {
         sampleImages.push(sampleImage)
       }
-      imageIndex++
-    }
+    })
 
     if (!businessLogo) {
       console.log('API Route: Business logo is missing')
@@ -260,10 +259,31 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Submission error:', error)
+    
+    // More detailed error logging
+    let errorMessage = 'There was an error processing your submission. Please try again.'
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      })
+      
+      // Provide more specific error messages
+      if (error.message.includes('timeout')) {
+        errorMessage = 'Upload timed out. Please try with smaller files or check your internet connection.'
+      } else if (error.message.includes('network')) {
+        errorMessage = 'Network error. Please check your internet connection and try again.'
+      } else if (error.message.includes('cloudinary') || error.message.includes('upload')) {
+        errorMessage = 'File upload failed. Please try again or contact us directly.'
+      }
+    }
+    
     return NextResponse.json(
       { 
-        error: 'There was an error processing your submission. Please try again.',
-        success: false
+        error: errorMessage,
+        success: false,
+        details: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }
     )
