@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
-import { uploadToCloudinary } from '@/lib/cloudinary'
 
 // Email configuration using your provided SMTP settings
 const transporter = nodemailer.createTransport({
@@ -16,21 +15,25 @@ const transporter = nodemailer.createTransport({
 export async function POST(request: NextRequest) {
   try {
     console.log('API Route: Starting form submission processing...')
-    const formData = await request.formData()
-    console.log('API Route: FormData received successfully')
+    const submissionData = await request.json()
+    console.log('API Route: JSON data received successfully')
     
-    // Extract form fields
+    // Extract form fields from JSON
     const vendorData = {
-      businessName: formData.get('businessName') as string,
-      ownerName: formData.get('ownerName') as string,
-      email: formData.get('email') as string,
-      phone: formData.get('phone') as string,
-      website: formData.get('website') as string,
-      socialHandle: formData.get('socialHandle') as string,
-      location: formData.get('location') as string,
-      services: formData.get('services') as string,
-      description: formData.get('description') as string
+      businessName: submissionData.businessName,
+      ownerName: submissionData.ownerName,
+      email: submissionData.email,
+      phone: submissionData.phone,
+      website: submissionData.website,
+      socialHandle: submissionData.socialHandle,
+      location: submissionData.location,
+      services: submissionData.services,
+      description: submissionData.description
     }
+    
+    // Get uploaded image URLs
+    const logoUrl = submissionData.logoUrl
+    const sampleImageUrls = submissionData.sampleImageUrls || []
 
     // Validate required fields
     console.log('API Route: Validating form data...', vendorData)
@@ -46,95 +49,25 @@ export async function POST(request: NextRequest) {
     }
     console.log('API Route: Validation passed')
 
-    // Handle file uploads
-    const businessLogo = formData.get('businessLogo') as File
-    const sampleImages: File[] = []
-    
-    // Get sample images from 4 separate fields
-    const sampleImageFields = ['sampleImage1', 'sampleImage2', 'sampleImage3', 'sampleImage4']
-    sampleImageFields.forEach(fieldName => {
-      const sampleImage = formData.get(fieldName) as File
-      if (sampleImage && sampleImage.size > 0) {
-        sampleImages.push(sampleImage)
-      }
-    })
-
-    if (!businessLogo) {
-      console.log('API Route: Business logo is missing')
+    // Validate that we have the required logo URL
+    if (!logoUrl) {
+      console.log('API Route: Business logo URL is missing')
       return NextResponse.json(
         { error: 'Business logo is required' },
         { status: 400 }
       )
     }
-    console.log('API Route: Processing files...', { logoName: businessLogo.name, logoSize: businessLogo.size, sampleImagesCount: sampleImages.length })
 
-    // Check file sizes (100MB limit)
-    const maxFileSize = 100 * 1024 * 1024 // 100MB
-    if (businessLogo.size > maxFileSize) {
-      console.log('API Route: Business logo too large:', businessLogo.size)
-      return NextResponse.json(
-        { error: 'Business logo file size must be less than 100MB' },
-        { status: 400 }
-      )
-    }
+    console.log('API Route: Processing image URLs...', { 
+      logoUrl: logoUrl, 
+      sampleImagesCount: sampleImageUrls.length 
+    })
 
-    // Upload files to Cloudinary with descriptive names
-    console.log('API Route: Uploading logo to Cloudinary...')
-    let logoUpload: { url: string; public_id: string }
-    let logoName: string
-    
-    try {
-      const logoBytes = await businessLogo.arrayBuffer()
-      const logoBuffer = Buffer.from(logoBytes)
-      
-      // Create descriptive name: "businessname-logo"
-      logoName = `${vendorData.businessName.toLowerCase().replace(/[^a-z0-9]/g, '-')}-logo`
-      console.log('API Route: Logo name will be:', logoName)
-      logoUpload = await uploadToCloudinary(logoBuffer, businessLogo.name, 'mehfil-vendor-logos', logoName)
-      console.log('API Route: Logo uploaded successfully:', logoUpload.url)
-    } catch (logoError) {
-      console.error('API Route: Logo upload failed:', logoError)
-      throw new Error(`Logo upload failed: ${logoError instanceof Error ? logoError.message : 'Unknown error'}`)
-    }
-    
-    // Process sample images and upload to Cloudinary
-    console.log('API Route: Uploading sample images to Cloudinary...')
-    const sampleImageUploads: { url: string; filename: string }[] = []
-    
-    try {
-      for (let i = 0; i < sampleImages.length; i++) {
-        const image = sampleImages[i]
-        
-        // Check sample image file size
-        if (image.size > maxFileSize) {
-          console.log(`API Route: Sample image ${i} too large:`, image.size)
-          return NextResponse.json(
-            { error: `Sample image "${image.name}" file size must be less than 100MB` },
-            { status: 400 }
-          )
-        }
-        
-        console.log(`API Route: Processing sample image ${i + 1}:`, image.name)
-        const imageBytes = await image.arrayBuffer()
-        const imageBuffer = Buffer.from(imageBytes)
-        
-        // Create descriptive name: "businessname-sample-1"
-        const sampleName = `${vendorData.businessName.toLowerCase().replace(/[^a-z0-9]/g, '-')}-sample-${i + 1}`
-        console.log(`API Route: Sample image ${i + 1} name will be:`, sampleName)
-        
-        const imageUpload = await uploadToCloudinary(imageBuffer, image.name, 'mehfil-vendor-samples', sampleName)
-        console.log(`API Route: Sample image ${i + 1} uploaded successfully:`, imageUpload.url)
-        
-        sampleImageUploads.push({
-          url: imageUpload.url,
-          filename: `${vendorData.businessName} - Sample ${i + 1}`
-        })
-      }
-      console.log('API Route: All sample images uploaded successfully')
-    } catch (sampleError) {
-      console.error('API Route: Sample image upload failed:', sampleError)
-      throw new Error(`Sample image upload failed: ${sampleError instanceof Error ? sampleError.message : 'Unknown error'}`)
-    }
+    // Prepare sample image data for email
+    const sampleImageUploads = sampleImageUrls.map((url: string, index: number) => ({
+      url: url,
+      filename: `${vendorData.businessName} - Sample ${index + 1}`
+    }))
 
     // No email attachments needed - we'll include URLs in the email instead
     const attachments: any[] = []
@@ -222,17 +155,15 @@ export async function POST(request: NextRequest) {
             <h2>📎 Media Files (Stored in Cloudinary)</h2>
             <div style="margin-bottom: 20px; padding: 15px; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #6366f1;">
               <p><strong>🏢 Business Logo:</strong></p>
-              <p style="margin: 5px 0;"><strong>File name in Cloudinary:</strong> <code>${logoName}</code></p>
-              <img src="${logoUpload.url}" alt="Business Logo" style="max-width: 150px; max-height: 150px; border-radius: 8px; margin: 10px 0; border: 2px solid #e5e7eb;">
-              <br><a href="${logoUpload.url}" target="_blank" style="color: #6366f1; text-decoration: none; font-weight: bold;">🔗 View/Download Full Size Logo</a>
+              <img src="${logoUrl}" alt="Business Logo" style="max-width: 150px; max-height: 150px; border-radius: 8px; margin: 10px 0; border: 2px solid #e5e7eb;">
+              <br><a href="${logoUrl}" target="_blank" style="color: #6366f1; text-decoration: none; font-weight: bold;">🔗 View/Download Full Size Logo</a>
             </div>
             ${sampleImageUploads.length > 0 ? `
               <div style="margin-top: 20px;">
                 <p><strong>📸 Sample Images:</strong></p>
-                ${sampleImageUploads.map((img, index) => `
+                ${sampleImageUploads.map((img: any, index: number) => `
                   <div style="margin: 15px 0; padding: 15px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
                     <p style="margin: 0 0 5px 0; font-weight: bold;">${img.filename}</p>
-                    <p style="margin: 5px 0; font-size: 12px; color: #6b7280;"><strong>File name in Cloudinary:</strong> <code>${vendorData.businessName.toLowerCase().replace(/[^a-z0-9]/g, '-')}-sample-${index + 1}</code></p>
                     <img src="${img.url}" alt="${img.filename}" style="max-width: 150px; max-height: 150px; border-radius: 8px; margin: 10px 0; border: 2px solid #e5e7eb;">
                     <br><a href="${img.url}" target="_blank" style="color: #6366f1; text-decoration: none; font-weight: bold;">🔗 View/Download Full Size</a>
                   </div>
@@ -271,8 +202,8 @@ export async function POST(request: NextRequest) {
       { 
         message: 'Submission successful! We will review your information and feature you soon.',
         success: true,
-        logoUrl: logoUpload.url,
-        sampleImages: sampleImageUploads.map(img => img.url)
+        logoUrl: logoUrl,
+        sampleImages: sampleImageUrls
       },
       { status: 200 }
     )

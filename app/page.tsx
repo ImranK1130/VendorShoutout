@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
+import { uploadFileToCloudinary, CloudinaryUploadResult } from '@/lib/cloudinary-upload'
 
 interface FormData {
   businessName: string
@@ -96,24 +97,63 @@ export default function VendorShoutoutForm() {
     setUploadProgress('Preparing files for upload...')
 
     try {
-      const formDataToSend = new FormData()
+      // Upload files to Cloudinary first
+      const businessName = formData.businessName.toLowerCase().replace(/[^a-z0-9]/g, '-')
+      let logoUrl = ''
+      const sampleImageUrls: string[] = []
       
-      // Add all form fields
-      Object.entries(formData).forEach(([key, value]) => {
-        if (key === 'businessLogo' && value) {
-          formDataToSend.append('businessLogo', value)
-        } else if (key.startsWith('sampleImage') && value) {
-          formDataToSend.append(key, value)
-        } else if (typeof value === 'string') {
-          formDataToSend.append(key, value)
-        }
-      })
-
-      setUploadProgress('Uploading files to cloud storage...')
+      // Upload business logo
+      if (formData.businessLogo) {
+        setUploadProgress('Uploading business logo...')
+        const logoResult = await uploadFileToCloudinary(
+          formData.businessLogo,
+          'mehfil-vendor-logos',
+          `${businessName}-logo-${Date.now()}`
+        )
+        logoUrl = logoResult.url
+      }
+      
+      // Upload sample images
+      const sampleFiles = [
+        formData.sampleImage1,
+        formData.sampleImage2, 
+        formData.sampleImage3,
+        formData.sampleImage4
+      ].filter(file => file !== null) as File[]
+      
+      for (let i = 0; i < sampleFiles.length; i++) {
+        setUploadProgress(`Uploading sample image ${i + 1} of ${sampleFiles.length}...`)
+        const sampleResult = await uploadFileToCloudinary(
+          sampleFiles[i],
+          'mehfil-vendor-samples',
+          `${businessName}-sample-${i + 1}-${Date.now()}`
+        )
+        sampleImageUrls.push(sampleResult.url)
+      }
+      
+      setUploadProgress('Sending submission...')
+      
+      // Now send just the text data + image URLs to our API
+      const submissionData = {
+        businessName: formData.businessName,
+        ownerName: formData.ownerName,
+        email: formData.email,
+        phone: formData.phone,
+        website: formData.website,
+        socialHandle: formData.socialHandle,
+        location: formData.location,
+        services: formData.services,
+        description: formData.description,
+        logoUrl: logoUrl,
+        sampleImageUrls: sampleImageUrls
+      }
       
       const response = await fetch('/api/submit-vendor', {
         method: 'POST',
-        body: formDataToSend,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submissionData),
       })
 
       if (response.ok) {
