@@ -71,15 +71,9 @@ export default function VendorShoutoutForm() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'businessLogo' | 'sampleImage1' | 'sampleImage2' | 'sampleImage3' | 'sampleImage4') => {
     const files = Array.from(e.target.files || [])
-    const maxFileSize = 100 * 1024 * 1024 // 100MB in bytes
     
     if (files.length > 0) {
       const file = files[0]
-      if (file.size > maxFileSize) {
-        setErrors(prev => ({ ...prev, [field]: 'File size must be less than 100MB' }))
-        e.target.value = '' // Clear the input
-        return
-      }
       setFormData(prev => ({ ...prev, [field]: file }))
       if (errors[field]) {
         setErrors(prev => ({ ...prev, [field]: '' }))
@@ -104,7 +98,8 @@ export default function VendorShoutoutForm() {
       
       // Upload business logo
       if (formData.businessLogo) {
-        setUploadProgress('Uploading business logo...')
+        const logoSize = (formData.businessLogo.size / 1024 / 1024).toFixed(2)
+        setUploadProgress(`Processing business logo (${logoSize}MB)...`)
         const logoResult = await uploadFileToCloudinary(
           formData.businessLogo,
           'mehfil-vendor-logos',
@@ -122,7 +117,8 @@ export default function VendorShoutoutForm() {
       ].filter(file => file !== null) as File[]
       
       for (let i = 0; i < sampleFiles.length; i++) {
-        setUploadProgress(`Uploading sample image ${i + 1} of ${sampleFiles.length}...`)
+        const fileSize = (sampleFiles[i].size / 1024 / 1024).toFixed(2)
+        setUploadProgress(`Processing sample image ${i + 1} of ${sampleFiles.length} (${fileSize}MB)...`)
         const sampleResult = await uploadFileToCloudinary(
           sampleFiles[i],
           'mehfil-vendor-samples',
@@ -459,13 +455,13 @@ export default function VendorShoutoutForm() {
                     accept="image/png,image/jpeg,image/svg+xml,image/jpg"
                     className={`form-input ${errors.businessLogo ? 'border-red-500' : ''}`}
                   />
-                  <p className="text-sm text-gray-500 mt-1">PNG, JPG, or SVG (max 100MB)</p>
+                  <p className="text-sm text-gray-500 mt-1">PNG, JPG, or SVG (auto-compressed if needed)</p>
                   {errors.businessLogo && <p className="text-red-500 text-sm mt-1">{errors.businessLogo}</p>}
                 </div>
 
                 <div className="form-group">
                   <label className="form-label">Sample Images</label>
-                  <p className="text-sm text-gray-600 mb-4">Upload up to 4 images of your work/products (max 100MB each)</p>
+                  <p className="text-sm text-gray-600 mb-4">Upload up to 4 images of your work/products (auto-compressed if needed)</p>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Sample Image 1 */}
