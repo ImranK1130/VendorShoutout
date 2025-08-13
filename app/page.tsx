@@ -192,6 +192,8 @@ export default function VendorShoutoutForm() {
         // Show specific error message if available
         if (errorData?.error) {
           alert(`Submission failed: ${errorData.error}`)
+        } else {
+          alert('Submission failed. If the problem persists, please send all the information to imran.khan@mehfil.app and we apologize for the inconvenience.')
         }
       }
     } catch (error) {
@@ -277,7 +279,7 @@ export default function VendorShoutoutForm() {
           {submitStatus === 'error' && (
             <div className="mb-8 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
               <h3 className="font-semibold">Submission Error</h3>
-              <p>There was an error submitting your form. Please try again or contact us directly.</p>
+              <p>There was an error submitting your form. Please try again. If the problem persists, please send all the information to imran.khan@mehfil.app and we apologize for the inconvenience.</p>
             </div>
           )}
 

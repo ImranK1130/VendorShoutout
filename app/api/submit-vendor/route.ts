@@ -212,7 +212,7 @@ export async function POST(request: NextRequest) {
     console.error('Submission error:', error)
     
     // More detailed error logging
-    let errorMessage = 'There was an error processing your submission. Please try again.'
+    let errorMessage = 'There was an error processing your submission. Please try again. If the problem persists, please send all the information to imran.khan@mehfil.app and we apologize for the inconvenience.'
     if (error instanceof Error) {
       console.error('Error details:', {
         message: error.message,
@@ -222,11 +222,11 @@ export async function POST(request: NextRequest) {
       
       // Provide more specific error messages
       if (error.message.includes('timeout')) {
-        errorMessage = 'Upload timed out. Please try with smaller files or check your internet connection.'
+        errorMessage = 'Upload timed out. Please try with smaller files or check your internet connection. If the problem persists, please send all the information to imran.khan@mehfil.app and we apologize for the inconvenience.'
       } else if (error.message.includes('network')) {
-        errorMessage = 'Network error. Please check your internet connection and try again.'
+        errorMessage = 'Network error. Please check your internet connection and try again. If the problem persists, please send all the information to imran.khan@mehfil.app and we apologize for the inconvenience.'
       } else if (error.message.includes('cloudinary') || error.message.includes('upload')) {
-        errorMessage = 'File upload failed. Please try again or contact us directly.'
+        errorMessage = 'File upload failed. Please try again or contact us directly at imran.khan@mehfil.app. We apologize for the inconvenience.'
       }
     }
     
