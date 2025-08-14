@@ -338,7 +338,7 @@ export default function VendorShoutoutForm() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="form-group">
-                  <label className="form-label">Business Email *</label> 
+                  <label className="form-label">Business Email / Mehfil Email *</label> 
                   <input
                     type="email"
                     name="email"
