@@ -338,15 +338,16 @@ export default function VendorShoutoutForm() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="form-group">
-                  <label className="form-label">Business Email / Mehfil Email *</label> 
+                  <label className="form-label">Business Email or Mehfil Email *</label> 
                   <input
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
                     className={`form-input ${errors.email ? 'border-red-500' : ''}`}
-                    placeholder="business@example.com"
+                    placeholder="business@example.com or your Mehfil email"
                   />
+                  <p className="text-sm text-gray-500 mt-1">You can use either your business email or the email associated with your Mehfil account</p>
                   {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
                 </div>
 
