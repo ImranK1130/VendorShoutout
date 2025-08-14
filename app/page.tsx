@@ -243,6 +243,14 @@ export default function VendorShoutoutForm() {
             <p className="text-xl text-white/90">
               Get featured on Mehfil's social media! Submit your business information and we'll create a professional shoutout post for you.
             </p>
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-blue-800 font-medium">📋 Requirements:</p>
+              <ul className="text-blue-700 text-sm mt-2 space-y-1">
+                <li>• You must have an account on <a href="https://mehfil.app" target="_blank" className="underline font-semibold">mehfil.app</a></li>
+                <li>• You must have an active business listing on Mehfil</li>
+                <li>• Provide the email address used to create your Mehfil account</li>
+              </ul>
+            </div>
           </div>
           
           <div className="flex justify-center items-center gap-8 text-white/80 text-sm">
@@ -330,8 +338,7 @@ export default function VendorShoutoutForm() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="form-group">
-                  {/* <label className="form-label">Account Email on Mehfil *</label> */}
-                  <label className="form-label">Email *</label> 
+                  <label className="form-label">Business Email *</label> 
                   <input
                     type="email"
                     name="email"
@@ -356,6 +363,8 @@ export default function VendorShoutoutForm() {
                   {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
                 </div>
               </div>
+
+
             </div>
 
             {/* Online Presence Section */}
